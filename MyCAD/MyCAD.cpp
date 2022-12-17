@@ -13,12 +13,15 @@
 MyCAD::MyCAD(QWidget* parent)
 	: QMainWindow(parent)
 {
+	//Service template variable
 	OdRxObjectImpl<MyService> svcs;
 	if (&svcs == NULL)
 	{
 		exit(1);
 	}
+	//Initialize the Drawing explorer
 	odInitialize(&svcs);
+	//
 	svcs.setRecomputeDimBlocksRequired(false);
 	OdDbDatabasePtr pDb = svcs.createDatabase(false);
 	try
@@ -38,29 +41,51 @@ MyCAD::MyCAD(QWidget* parent)
 		msgBox.setText("OdError has occurred.");
 		msgBox.exec();
 	}
+	OdDbDatabasePtr pDb1;
+	try
+	{
+		//creating a empty database
+		pDb1 = svcs.createDatabase(true);
+	}
+	catch (OdError& error)
+	{
+		QMessageBox msgBox;
+		msgBox.setText("Empty database not created");
+		msgBox.exec();
+	}
+	//Open the Block Table
 	OdDbBlockTablePtr pTable = pDb->getBlockTableId().safeOpenObject(OdDb::kForWrite);
 	OdDbObjectId blockTableID = pDb->getBlockTableId();
 
-	/**********************************************************************/
-	/* Open the Model Space block                                         */
-	/**********************************************************************/
+	//Open the Block Table
+	OdDbBlockTablePtr mypTable = pDb1->getBlockTableId().safeOpenObject(OdDb::kForWrite);
+	OdDbObjectId myblockTableID = pDb1->getBlockTableId();
+
+	//Open the Model Space block
 	OdDbBlockTableRecordPtr pModelSpace = pDb->getModelSpaceId().safeOpenObject(OdDb::kForWrite);
 
+	//Open the Model Space block
+	OdDbBlockTableRecordPtr mypModelSpace = pDb1->getModelSpaceId().safeOpenObject(OdDb::kForWrite);
+
 	OdDbLinePtr pLine = OdDbLine::createObject();
-	OdDbObjectId objId = pModelSpace->appendOdDbEntity(pLine);
+	//OdDbObjectId objId = pModelSpace->appendOdDbEntity(pLine);
+	OdDbObjectId myobjId = mypModelSpace->appendOdDbEntity(pLine);
 	pLine->setStartPoint(OdGePoint3d(2, 0, 0));
 	pLine->setEndPoint(OdGePoint3d(4, 2, 0));
 	pLine->setColorIndex(12);
 
-	/**********************************************************************/
-	/* Saving the created database as a file                              */
-	/**********************************************************************/
-	pDb->writeFile("Drawing.dwg", OdDb::kDwg, OdDb::vAC24);
+	OdDbCirclePtr pCircle = OdDbCircle::createObject();
+	mypModelSpace->appendOdDbEntity(pCircle);
+	OdGePoint3d center = OdGePoint3d(2.0, 0, 0);
+	pCircle->setCenter(center);
+	pCircle->setRadius(2.0);
 
-	/**********************************************************************/
-	/* Delete the Database instance                                       */
-	/**********************************************************************/
+	//Saving the created database as a file
+	pDb->writeFile("Drawing.dwg", OdDb::kDwg, OdDb::vAC24);
+	pDb1->writeFile("MyDrawing.dwg", OdDb::kDwg, OdDb::vAC24);
+	//Delete the Database instance
 	pDb.release();
+	pDb1.release();
 	ui.setupUi(this);
 	odUninitialize();
 }
