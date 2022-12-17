@@ -27,7 +27,7 @@ MyCAD::MyCAD(QWidget* parent)
 	OdDbDatabasePtr pDb = svcs.createDatabase(false);
 	try
 	{
-		//populate it by reading an input file:
+		//populate the empty database by reading an input file:
 		pDb = svcs.readFile("Drawing.dwg");
 	}
 	catch (OdError_FileException)
@@ -55,6 +55,7 @@ MyCAD::MyCAD(QWidget* parent)
 		msgBox.setText("Empty database not created");
 		msgBox.exec();
 	}
+
 	//Open the Block Table
 	OdDbBlockTablePtr pTable = mypDb->getBlockTableId().safeOpenObject(OdDb::kForWrite);
 	OdDbObjectId blockTableID = mypDb->getBlockTableId();
@@ -77,6 +78,23 @@ MyCAD::MyCAD(QWidget* parent)
 
 	//saving the file
 	mypDb->writeFile("Drawing3.dwg", OdDb::kDwg, OdDb::vAC24);
+
+	//Reading Database routine 
+	//Open the Block Table
+	OdDbBlockTablePtr pTable1 = pDb->getBlockTableId().safeOpenObject(OdDb::kForRead);
+	OdDbObjectId blockTableID1 = pDb->getBlockTableId();
+
+	//Open the Model Space block
+	OdDbBlockTableRecordPtr pModelSpace1 = pDb->getModelSpaceId().safeOpenObject(OdDb::kForRead);
+
+	//Get a SmartPointer to a new ObjectIterator
+	OdDbObjectIteratorPtr pEntIter = pModelSpace->newIterator();
+	//Step through the BlockTableRecord
+	for (; !pEntIter->done(); pEntIter->step())
+	{
+		//Get the classname of an Entity
+		printf("Classname: %ls\n", (pEntIter->objectId().safeOpenObject(OdDb::kForRead))->isA()->name().c_str());
+	}
 
 	//release the pointer(otherwise it will give error)
 	pDb.release();
