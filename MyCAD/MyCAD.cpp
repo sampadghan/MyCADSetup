@@ -13,15 +13,11 @@
 MyCAD::MyCAD(QWidget* parent)
 	: QMainWindow(parent)
 {
-	//Service template variable
-	OdRxObjectImpl<MyService> svcs;
-	if (&svcs == NULL)
+	
+	if (initialize() == false)
 	{
 		exit(1);
 	}
-	//Initialize the Drawing explorer
-	odInitialize(&svcs);
-	//
 	svcs.setRecomputeDimBlocksRequired(false);
 	//To create an empty database
 	OdDbDatabasePtr pDb = svcs.createDatabase(false);
@@ -101,11 +97,21 @@ MyCAD::MyCAD(QWidget* parent)
 	mypDb.release();
 	//setup the ui
 	ui.setupUi(this);
-	//UnInitialize the service
-	odUninitialize();
 }
 
 MyCAD::~MyCAD()
 {
-	//odUninitialize();
+	//UnInitialize the service
+	odUninitialize();
+}
+
+bool MyCAD::initialize()
+{
+	if (&svcs == NULL)
+	{
+		return false;
+	}
+	//Initialize the Drawing explorer
+	odInitialize(&svcs);
+	return true;
 }
